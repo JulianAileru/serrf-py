@@ -1,0 +1,52 @@
+2026-03-04 11:42:51 [Preprocessor] INFO Starting Preprocessing
+2026-03-04 11:42:51 [Preprocessor] INFO Filling Missing Values with: None Method
+2026-03-04 11:42:51 [Preprocessor] INFO No Imputation Applied
+2026-03-04 11:42:51 [Preprocessor] INFO No Normalization Applied
+2026-03-04 11:42:51 [Preprocessor] INFO No Transformation Applied
+2026-03-04 11:42:51 [SERRF] INFO Adjusting Data Labels
+2026-03-04 11:42:51 [SERRF] INFO Initializing Models
+2026-03-04 11:42:51 [SERRF] INFO Computing Correlation Matrix [A/4]
+2026-03-04 11:42:51 [SERRF] INFO Selecting Top Correlated Features: [A/4]
+2026-03-04 11:43:43 [Preprocessor] INFO Starting Preprocessing
+2026-03-04 11:43:43 [Preprocessor] INFO Filling Missing Values with: None Method
+2026-03-04 11:43:43 [Preprocessor] INFO No Imputation Applied
+2026-03-04 11:43:43 [Preprocessor] INFO No Normalization Applied
+2026-03-04 11:43:43 [Preprocessor] INFO No Transformation Applied
+2026-03-04 11:43:43 [SERRF] INFO Adjusting Data Labels
+2026-03-04 11:43:43 [SERRF] INFO Initializing Models
+2026-03-04 11:43:43 [SERRF] INFO Computing Correlation Matrix [A/4]
+2026-03-04 11:43:43 [SERRF] INFO Selecting Top Correlated Features: [A/4]
+2026-03-04 11:43:43 [rpy2.situation] INFO cffi mode is CFFI_MODE.ANY
+2026-03-04 11:43:43 [rpy2.situation] INFO R home found: /Library/Frameworks/R.framework/Resources
+2026-03-04 11:43:43 [rpy2.situation] INFO R library path: 
+2026-03-04 11:43:43 [rpy2.situation] INFO LD_LIBRARY_PATH: 
+2026-03-04 11:43:44 [rpy2.rinterface_lib.openrlib] WARNING Error importing in API mode: ImportError("dlopen(/Users/julianaileru/anaconda3/envs/home/lib/python3.13/site-packages/_rinterface_cffi_api.abi3.so, 0x0002): Library not loaded: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.dylib\n  Referenced from: <B96A8100-FA7A-3EFC-8726-931D26646DE6> /Users/julianaileru/anaconda3/envs/home/lib/python3.13/site-packages/_rinterface_cffi_api.abi3.so\n  Reason: tried: '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.dylib' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.dylib' (no such file), '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.dylib' (no such file)")
+2026-03-04 11:43:44 [rpy2.rinterface_lib.openrlib] WARNING Trying to import in ABI mode.
+2026-03-04 11:43:44 [rpy2.rinterface_lib.embedded] INFO Default options to initialize R: rpy2, --quiet, --no-save
+2026-03-04 11:43:44 [rpy2.rinterface] INFO Environment variable "PWD" redefined by R and overriding existing variable. Current: "/", R: "/Users/julianaileru/UNC-CH/SumnerLab/serrf-py/notebooks"
+2026-03-04 11:43:44 [rpy2.rinterface] INFO R is already initialized. No need to initialize.
+2026-03-04 11:43:45 [rpy2.rinterface_lib.callbacks] WARNING R callback write-console: ranger 0.17.0 using 2 threads (default). Change with num.threads in ranger() and predict(), options(Ncpus = N), options(ranger.num.threads = N) or environment variable R_RANGER_NUM_THREADS.
+  
+2026-03-04 11:43:52 [SERRF] INFO Computing Correlation Matrix [B/4]
+2026-03-04 11:43:52 [SERRF] INFO Selecting Top Correlated Features: [B/4]
+2026-03-04 11:44:00 [SERRF] INFO Computing Correlation Matrix [C/4]
+2026-03-04 11:44:00 [SERRF] INFO Selecting Top Correlated Features: [C/4]
+2026-03-04 11:44:07 [SERRF] INFO Computing Correlation Matrix [D/4]
+2026-03-04 11:44:07 [SERRF] INFO Selecting Top Correlated Features: [D/4]
+2026-03-04 11:44:14 [SERRF] INFO Normalizing All Batches
+2026-03-04 11:44:15 [Preprocessor] INFO Starting Preprocessing
+2026-03-04 11:44:15 [Preprocessor] INFO Filling Missing Values with: None Method
+2026-03-04 11:44:15 [Preprocessor] INFO No Imputation Applied
+2026-03-04 11:44:15 [Preprocessor] INFO No Normalization Applied
+2026-03-04 11:44:15 [Preprocessor] INFO No Transformation Applied
+2026-03-04 11:44:15 [SERRF] INFO Adjusting Data Labels
+2026-03-04 11:44:15 [SERRF] INFO Initializing Models
+2026-03-04 11:44:15 [SERRF] INFO Computing Correlation Matrix [A/4]
+2026-03-04 11:44:15 [SERRF] INFO Selecting Top Correlated Features: [A/4]
+2026-03-04 11:44:20 [SERRF] INFO Computing Correlation Matrix [B/4]
+2026-03-04 11:44:20 [SERRF] INFO Selecting Top Correlated Features: [B/4]
+2026-03-04 11:44:25 [SERRF] INFO Computing Correlation Matrix [C/4]
+2026-03-04 11:44:25 [SERRF] INFO Selecting Top Correlated Features: [C/4]
+2026-03-04 11:44:30 [SERRF] INFO Computing Correlation Matrix [D/4]
+2026-03-04 11:44:31 [SERRF] INFO Selecting Top Correlated Features: [D/4]
+2026-03-04 11:44:35 [SERRF] INFO Normalizing All Batches

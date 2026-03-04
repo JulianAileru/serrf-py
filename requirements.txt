@@ -1,0 +1,8 @@
+numpy>=2.4.0
+pandas>=2.3.3
+scikit-learn>=1.8.0
+joblib>=1.5.3
+tqdm>=4.67.1
+
+# Optional: required only when use_ranger=True
+# rpy2>=3.6.4
