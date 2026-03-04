@@ -1,0 +1,20 @@
+name: serrf-py
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.13
+  - numpy>=2.4.0
+  - pandas>=2.3.3
+  - scikit-learn>=1.8.0
+  - joblib>=1.5.3
+  - tqdm>=4.67.1
+  # Optional: required only when use_ranger=True
+  # Installs R and the ranger package via conda-forge
+  # Uncomment if you do not already have R >= 4.0 installed system-wide
+  # - r-base>=4.0
+  # - r-ranger
+  - pip:
+    # Optional: required only when use_ranger=True
+    # If using system R, ensure R >= 4.0 and install.packages("ranger") in R first
+    - rpy2>=3.6.4

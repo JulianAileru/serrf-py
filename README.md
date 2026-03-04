@@ -123,11 +123,36 @@ The small median error and strong correlation confirm the Python implementation 
 
 ---
 
-## Dependencies
+## Installation
 
-- `pandas`
-- `numpy`
-- `scikit-learn`
-- `joblib`
-- `tqdm`
-- `rpy2` *(optional, for `use_ranger=True`)*
+### Conda (recommended)
+
+```bash
+conda env create -f environment.yml
+conda activate serrf-py
+```
+
+This creates a self-contained environment with all required packages. For `use_ranger=True` support, you additionally need R >= 4.0 with the `ranger` package:
+
+- **System R (already installed):** open R and run `install.packages("ranger")`
+- **Via conda instead:** uncomment `r-base` and `r-ranger` in `environment.yml` before creating the environment
+
+### pip
+
+```bash
+pip install -r requirements.txt
+```
+
+For `use_ranger=True`: install R >= 4.0 from [cran.r-project.org](https://cran.r-project.org), run `install.packages("ranger")` in R, then `pip install rpy2`.
+
+### Dependencies
+
+| Package | Required | Purpose |
+|---------|----------|---------|
+| `numpy` | Yes | Numerical operations |
+| `pandas` | Yes | Data manipulation |
+| `scikit-learn` | Yes | Random Forest regression |
+| `joblib` | Yes | Parallel batch processing |
+| `tqdm` | Yes | Progress bars |
+| `rpy2` | Optional | `use_ranger=True` — calls R's ranger directly |
+| R + ranger | Optional | Required alongside `rpy2` |
