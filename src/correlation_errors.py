@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np 
 from joblib import Parallel,delayed
 from sklearn.ensemble import RandomForestRegressor
-from tqdm import tqdm
 import sys,os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
@@ -26,15 +25,16 @@ class SERRF(BatchCorrector):
         self.num_features=num_features
         self.use_ranger = use_ranger
     def adjust_data_labels(self,data,metadata,rowvar=False):
+        self.logger.info(f"Adjusting sample labels (QC='{self.qc_str}', Blank='{self.blank_str}')")
         mask_qc_data = data.index.str.contains(self.qc_str)
         mask_qc_meta = metadata.index.str.contains(self.qc_str)
         mask_blank_data = data.index.str.contains(self.blank_str) | data.index.str.endswith("_BLANK")
         mask_blank_meta = metadata.index.str.contains(self.blank_str) | metadata.index.str.endswith("_BLANK")
-        
+
         # Apply BLANK labels first
         data.index = data.index.where(~mask_blank_data, data.index + "_BLANK")
         metadata.index = metadata.index.where(~mask_blank_meta, metadata.index + "_BLANK")
-        
+
         # Apply QC labels next
         data.index = data.index.where(~mask_qc_data, data.index + "_QualityControl")
         metadata.index = metadata.index.where(~mask_qc_meta, metadata.index + "_QualityControl")
@@ -44,7 +44,10 @@ class SERRF(BatchCorrector):
         mask_bio_meta = ~(mask_qc_meta | mask_blank_meta)
         data.index = data.index.where(~mask_bio_data, data.index + "_Biological")
         metadata.index = metadata.index.where(~mask_bio_meta, metadata.index + "_Biological")
-
+        self.logger.info(
+            f"Label counts — Biological: {mask_bio_data.sum()}, "
+            f"QC: {mask_qc_data.sum()}, Blank: {mask_blank_data.sum()}"
+        )
         return data,metadata
 
     @staticmethod
@@ -342,49 +345,53 @@ class SERRF(BatchCorrector):
         return df
         
     def correct(self,data,metadata):
-        root_logger = logging.getLogger()
-        logfile = root_logger.handlers[0].stream
-        self.logger.info("Adjusting Data Labels")
         self.all_data,self.metadata = self.adjust_data_labels(data=data,metadata=metadata)
         self.all_data = self.all_data.T
         self.signals = self.all_data.index.to_list()
         self.batches = self.metadata['batch'].unique()
+        self.logger.info(
+            f"Starting SERRF correction — {len(self.signals)} signals, "
+            f"{len(self.batches)} batch(es)"
+        )
         if self.serrf_impute:
-            self.logger.info("Filling Missing Values using Gaussian Sampling")
-            print('Filling missing values')
+            self.logger.info("Imputing missing values per batch (Gaussian sampling)")
             imputed_all = []
             for batch in self.batches:
                 batch_cols = self.all_data.columns[self.metadata['batch'] == batch]
                 filled_na = SERRF.impute(self.all_data.loc[:, batch_cols])
                 imputed_all.append(filled_na)
             self.all_data = pd.concat(imputed_all,axis=1)
-        self.logger.info("Initializing Models")
-        print("Initailzing Models")
+            self.logger.info("Imputation complete")
         normalized_batches = []
-        for batch in self.batches:
+        for i, batch in enumerate(self.batches, 1):
             self.current_batch = self.all_data.loc[:,self.metadata['batch'] == batch]
-            self.logger.info(f"Computing Correlation Matrix [{batch}/{len(self.batches)}]")
-            print(f"Computing Correlation Matrix [{batch}/{len(self.batches)}]")
+            n_qc = self.current_batch.columns.str.contains("_QualityControl").sum()
+            n_bio = self.current_batch.columns.str.contains("_Biological").sum()
+            self.logger.info(
+                f"Batch {batch} [{i}/{len(self.batches)}] — "
+                f"{n_qc} QC samples, {n_bio} biological samples"
+            )
+            self.logger.info(f"Batch {batch} — computing Spearman correlation matrix")
             self.compute_correlation()
-            self.logger.info(f"Selecting Top Correlated Features: [{batch}/{len(self.batches)}]")
-            print(f"Selecting Top Correlated Features: [{batch}/{len(self.batches)}]")
+            self.logger.info(f"Batch {batch} — selecting top {self.num_features} correlated features per signal")
             self.top_correlated(n=self.num_features)
-            normalized_signals = []
-            pbar = tqdm(self.signals,desc=f'\t Buliding models for batch {batch}',dynamic_ncols=True)
+            self.logger.info(f"Batch {batch} — fitting random forest models ({len(self.signals)} signals)")
             n_jobs = 1 if self.use_ranger else self.n_jobs
-            normalized_signals = Parallel(n_jobs=n_jobs)(delayed(SERRF.fit_predict)(all_data=self.all_data,batch=batch,
-                                                                                features=self.features,metadata=self.metadata,signal=signal,use_ranger=self.use_ranger)
-                                                                                for signal in pbar)
-            #For debuging per signal
-            # for signal in tqdm(self.signals,desc=f'Normalizing batch {batch}'):
-            #     norm_signal = self.fit_predict(all_data=self.all_data,metadata=self.metadata,batch=batch,features=self.features,signal=signal)
-            #     normalized_signals.append(norm_signal)
+            normalized_signals = Parallel(n_jobs=n_jobs)(
+                delayed(SERRF.fit_predict)(
+                    all_data=self.all_data, batch=batch, features=self.features,
+                    metadata=self.metadata, signal=signal, use_ranger=self.use_ranger
+                )
+                for signal in self.signals
+            )
+            self.logger.info(f"Batch {batch} — model fitting complete")
             batch_normalized = pd.concat(normalized_signals,axis=1)
             normalized_batches.append(batch_normalized)
         normalized_batches = pd.concat(normalized_batches).T
-        self.logger.info("Normalizing All Batches")
-        print('Normalizing All batches')
+        self.logger.info("Aligning QC samples across all batches")
         result = self.normalize_all_batches(normalized_data=normalized_batches)
+        self.logger.info("Applying final imputation and negative-value fixes")
         norm = self.final_fix(result)
+        self.logger.info(f"SERRF correction complete — output shape: {norm.shape}")
         return norm
      

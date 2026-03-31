@@ -1,5 +1,27 @@
 # Changelog
 
+## [2026-03-31] Logging Improvements
+
+### `src/base.py`
+
+- **Console + file logging:** Module-level setup now outputs to stdout by default. The hardcoded `FileHandler` has been removed in favour of a `log_file` parameter on `BatchCorrectionPipeline`.
+- **`BatchCorrectionPipeline`:** Added `log_file` parameter to `__init__`. When provided, a `FileHandler` is added to the root logger so all pipeline, preprocessor, and correction logs are written to the named file.
+- **`BatchCorrectionPipeline.correct()`:** Added start log (method name, sample count, feature count), stage transition logs, and a completion log with output shape.
+- **`BatchCorrectionPipeline.original_sample_names()`:** Added log describing the operation.
+- **`BatchCorrectionPipeline.return_blanks()`:** Added log reporting the number of blank samples re-appended.
+- **`Preprocessor.adjust_data_labels()`:** Added `logger` parameter; logs the QC/blank identifier strings and resulting per-label sample counts.
+- **`Preprocessor.apply()`:** Removed stray `print(self.imputation_method)` call.
+- **`Preprocessor.MeanNorm()`:** Fixed typo in log message (`"Normalziation"` → `"Normalization"`).
+- **Bug fix — `impute_median_value()` / `impute_mean_value()`:** Both methods were missing `return` statements, causing them to silently return `None`.
+
+### `src/correlation_errors.py`
+
+- **`SERRF.correct()`:** Removed all duplicate `print()` calls and the unused `root_logger` / `logfile` variables. Replaced `tqdm` progress bar (per-signal updates) with structured log messages at each stage: label adjustment, optional imputation, per-batch correlation, feature selection, model fitting start/complete, cross-batch normalization, and final fix.
+- **`SERRF.adjust_data_labels()`:** Added logs for the QC/blank strings used and the resulting per-label sample counts.
+- **Removed `tqdm` import** (no longer used).
+
+---
+
 ## [2026-03-04] `impute()` Method — Fixes and Integration
 
 ### Bug Fixes

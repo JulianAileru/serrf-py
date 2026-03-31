@@ -6,12 +6,14 @@ import pandas as pd
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(name)s] %(levelname)s %(message)s',
+_log_formatter = logging.Formatter(
+    fmt='%(asctime)s [%(name)s] %(levelname)s %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
-    filename='BatchEffectsPipeline.log'
 )
+_console_handler = logging.StreamHandler(sys.stdout)
+_console_handler.setFormatter(_log_formatter)
+
+logging.basicConfig(level=logging.INFO, handlers=[_console_handler])
 
 
 class Preprocessor:
@@ -49,10 +51,12 @@ class Preprocessor:
     def impute_median_value(data,logger):
         logger.info(f'Imputing Minimum Value: {data.median(axis=0)}')
         data = data.fillna(data.median(axis=0))
+        return data
     @staticmethod
     def impute_mean_value(data,logger):
         logger.info(f'Imputing Mean Value: {data.mean(axis=0)}')
         data = data.fillna(data.mean(axis=0))
+        return data
     # Normalization Methods
     @staticmethod
     def TIC(data,logger):
@@ -69,7 +73,7 @@ class Preprocessor:
     
     @staticmethod
     def MeanNorm(data,logger):
-        logger.info("Applying Mean Normalziation")
+        logger.info("Applying Mean Normalization")
         data = (data / data.mean(axis=1))
         return data
     @staticmethod
@@ -112,7 +116,6 @@ class Preprocessor:
                                   'Natural Log Transformation':Preprocessor.lntransform}
         
         impute = imputation_methods.get(self.imputation_method,self._no_option('Imputation'))
-        print(self.imputation_method)
         transform = transformation_methods.get(self.transformation_method,self._no_option("Transformation"))
         normalize = normalization_methods.get(self.normalization_method,self._no_option("Normalization"))
         data = impute(data, logger=self.logger)
@@ -121,11 +124,12 @@ class Preprocessor:
         return data
     
     @staticmethod
-    def adjust_data_labels(qc_str,blank_str,_data,_metadata):
+    def adjust_data_labels(qc_str,blank_str,_data,_metadata,logger=None):
+        if logger is None:
+            logger = logging.getLogger(Preprocessor.__name__)
+        logger.info(f"Adjusting sample labels (QC='{qc_str}', Blank='{blank_str}')")
         data = _data.copy()
         metadata = _metadata.copy()
-        # data.index = data.index.astype(str)
-        # metadata.index = metadata.index.astype(str)
         mask_qc_data = data.index.str.contains(qc_str)
         mask_qc_meta = metadata.index.str.contains(qc_str)
         mask_blank_data = data.index.str.contains(blank_str) | data.index.str.endswith("_BLANK")
@@ -143,28 +147,47 @@ class Preprocessor:
         mask_bio_meta = ~(mask_qc_meta | mask_blank_meta)
         data.index = data.index.where(~mask_bio_data, data.index + "_Biological")
         metadata.index = metadata.index.where(~mask_bio_meta, metadata.index + "_Biological")
+        logger.info(
+            f"Label counts — Biological: {mask_bio_data.sum()}, "
+            f"QC: {mask_qc_data.sum()}, Blank: {mask_blank_data.sum()}"
+        )
         return data,metadata
     
 class BatchCorrectionPipeline:
-    def __init__(self, method, preprocessing_config):
+    def __init__(self, method, preprocessing_config, logger=None, log_file=None):
         self.Method = method
         self.Preprocessor = preprocessing_config
-    def original_sample_names(self,corrected_data,metadata):
+        self.logger = logger or logging.getLogger(self.__class__.__name__)
+        if log_file:
+            file_handler = logging.FileHandler(log_file)
+            file_handler.setFormatter(_log_formatter)
+            logging.getLogger().addHandler(file_handler)
+
+    def original_sample_names(self, corrected_data, metadata):
+        self.logger.info("Restoring original sample names (stripping type suffixes)")
         corrected_data.index = corrected_data.index.str.replace(r'_(QualityControl|Biological|BLANK)$',"",regex=True)
         metadata.index = metadata.index.str.replace(r'_(QualityControl|Biological|BLANK)$',"",regex=True)
-        return corrected_data,metadata
-    def return_blanks(self,corrected_data,original_data):
-        original_data.index = original_data.index.str.replace(r'_(QualityControl|Biological|BLANK)$',"",regex=True)                
+        return corrected_data, metadata
+
+    def return_blanks(self, corrected_data, original_data):
+        original_data.index = original_data.index.str.replace(r'_(QualityControl|Biological|BLANK)$',"",regex=True)
         idx = original_data.index[~original_data.index.isin(corrected_data.index)]
+        self.logger.info(f"Re-appending {len(idx)} blank sample(s) excluded from correction")
         corrected_data = pd.concat([corrected_data, original_data.loc[idx, :]])
         return corrected_data
+
     def correct(self, data, metadata):
-        # Apply preprocessing
+        self.logger.info(
+            f"Starting batch correction: method={self.Method.__class__.__name__}, "
+            f"samples={len(data)}, features={data.shape[1]}"
+        )
         processed_data = self.Preprocessor.apply(data)
-        # Apply correction
+        self.logger.info("Preprocessing complete — applying batch correction method")
         corrected_data = self.Method.correct(processed_data, metadata)
-        corrected_data,metadata = self.original_sample_names(corrected_data,metadata=metadata)
-        corrected_data = self.return_blanks(corrected_data,processed_data)
+        self.logger.info("Batch correction complete — restoring sample names and blanks")
+        corrected_data, metadata = self.original_sample_names(corrected_data, metadata=metadata)
+        corrected_data = self.return_blanks(corrected_data, processed_data)
+        self.logger.info(f"Pipeline finished — output shape: {corrected_data.shape}")
         return corrected_data
 
 
