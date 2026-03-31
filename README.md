@@ -51,8 +51,8 @@ corrector = SERRF(
     n_jobs=-1,         # parallel jobs for Random Forest fitting
     num_features=10    # number of correlated features to use per signal
 )
-
-pipeline = BatchCorrectionPipeline(method=corrector, preprocessing_config=preprocessor)
+log_file = 'BatchEffectCorrectionPipeline.log' # specify log file or stdout will just be directed to the console
+pipeline = BatchCorrectionPipeline(method=corrector, preprocessing_config=preprocessor,log_file='BatchEffectCorrectionPipeline.log)
 corrected = pipeline.correct(data=data, metadata=metadata)
 ```
 
