@@ -15,6 +15,7 @@ dependencies:
   - r-base>=4.0
   - r-ranger
   - streamlit
+  - pip
   - pip:
     # Optional: required only when use_ranger=True
     # If using system R, ensure R >= 4.0 and install.packages("ranger") in R first
