@@ -165,14 +165,29 @@ class SERRF(BatchCorrector):
         return train_pred, test_pred
 
     @staticmethod
-    def fit_predict(all_data,metadata,batch,features,signal,use_ranger=False):
+    def global_stats(all_data):
+        """
+        Per-signal QC mean, QC median and biological median across all batches.
+        These are constant for the whole correction, so compute them once instead of per signal per batch.
+        """
+        qc_data = all_data.loc[:, all_data.columns.str.contains("_QualityControl")]
+        bio_data = all_data.loc[:, all_data.columns.str.contains("_Biological")]
+        stats = {}
+        for signal in all_data.index:
+            qc_row = qc_data.loc[signal]
+            stats[signal] = (qc_row.mean(), qc_row.median(), bio_data.loc[signal].median())
+        return stats
+
+    @staticmethod
+    def fit_predict(current_batch,train_id,test_id,features,signal,signal_stats,use_ranger=False):
         """
         Fit RF model and predict, following R logic more closely
+
+        current_batch: data for one batch only, shape (n_signals, n_batch_samples)
+        signal_stats: (qc_mean_all, qc_median_all, bio_median_all) for this signal across all batches
         """
-        current_batch = all_data.loc[:,metadata['batch'] == batch]
-        train_id = current_batch.columns[current_batch.columns.str.contains("_QualityControl")].tolist()
-        test_id = current_batch.columns[current_batch.columns.str.contains("_Biological")].tolist()
-        
+        qc_mean_all, qc_median_all, bio_median_all = signal_stats
+
         feat = features[signal]
         if len(feat) == 0:
             return current_batch.loc[signal, :].copy()
@@ -228,13 +243,13 @@ class SERRF(BatchCorrector):
 
         # 1. Normalize QC samples (training)
         train_pred_original_scale = train_pred + train_y.mean()
-        train_scale_factor = train_pred_original_scale / all_data.loc[signal, all_data.columns.str.contains("_QualityControl")].mean()
+        train_scale_factor = train_pred_original_scale / qc_mean_all
         norm[train_id] = norm[train_id] / train_scale_factor
 
         # 2. Normalize biological samples (test)
         test_pred_original_scale = test_pred + test_y.mean()
         test_pred_centered = test_pred_original_scale - test_pred.mean()
-        test_scale_factor = test_pred_centered / all_data.loc[signal, all_data.columns.str.contains("_Biological")].median()
+        test_scale_factor = test_pred_centered / bio_median_all
         norm[test_id] = norm[test_id] / test_scale_factor
 
         # 3. Fix negative values in biological samples
@@ -243,10 +258,10 @@ class SERRF(BatchCorrector):
             norm.loc[negative_mask.index[negative_mask]] = current_batch.loc[signal, negative_mask.index[negative_mask]]
 
         # 4. Adjust QC to match global median
-        norm[train_id] = norm[train_id] / (norm[train_id].median() / all_data.loc[signal, all_data.columns.str.contains("_QualityControl")].median())
+        norm[train_id] = norm[train_id] / (norm[train_id].median() / qc_median_all)
 
         # 5. Adjust biological samples to match global median
-        norm[test_id] = norm[test_id] / (norm[test_id].median() / all_data.loc[signal, all_data.columns.str.contains("_Biological")].median())
+        norm[test_id] = norm[test_id] / (norm[test_id].median() / bio_median_all)
 
         # 6. Handle infinite values
         inf_mask = np.isinf(norm)
@@ -261,8 +276,8 @@ class SERRF(BatchCorrector):
         if outliers.any():
             # Alternative calculation for outliers
             attempt = ((current_batch.loc[signal, test_id]) - 
-                    (test_pred_original_scale) + 
-                    all_data.loc[signal, all_data.columns.str.contains("_Biological")].median())
+                    (test_pred_original_scale) +
+                    bio_median_all)
             
             outlier_test_samples = outliers & norm.index.isin(test_id)
             
@@ -361,6 +376,8 @@ class SERRF(BatchCorrector):
                 imputed_all.append(filled_na)
             self.all_data = pd.concat(imputed_all,axis=1)
             self.logger.info("Imputation complete")
+        self.logger.info("Computing global per-signal QC/biological statistics")
+        stats = SERRF.global_stats(self.all_data)
         normalized_batches = []
         for i, batch in enumerate(self.batches, 1):
             self.current_batch = self.all_data.loc[:,self.metadata['batch'] == batch]
@@ -376,10 +393,13 @@ class SERRF(BatchCorrector):
             self.top_correlated(n=self.num_features)
             self.logger.info(f"Batch {batch} — fitting random forest models ({len(self.signals)} signals)")
             n_jobs = 1 if self.use_ranger else self.n_jobs
+            train_id = self.current_batch.columns[self.current_batch.columns.str.contains("_QualityControl")].tolist()
+            test_id = self.current_batch.columns[self.current_batch.columns.str.contains("_Biological")].tolist()
             normalized_signals = Parallel(n_jobs=n_jobs)(
                 delayed(SERRF.fit_predict)(
-                    all_data=self.all_data, batch=batch, features=self.features,
-                    metadata=self.metadata, signal=signal, use_ranger=self.use_ranger
+                    current_batch=self.current_batch, train_id=train_id, test_id=test_id,
+                    features=self.features, signal=signal, signal_stats=stats[signal],
+                    use_ranger=self.use_ranger
                 )
                 for signal in self.signals
             )
