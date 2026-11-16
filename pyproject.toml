@@ -5,9 +5,11 @@ description = "Python implementation of SERRF (Systematic Error Removal using Ra
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "fastparquet>=2026.9.0",
     "joblib>=1.5.3",
     "numpy>=2.4.0",
     "pandas>=2.3.3",
+    "pyarrow>=26.0.1",
     "rpy2>=3.6.4",
     "scikit-learn>=1.8.0",
     "tqdm>=4.67.1",
