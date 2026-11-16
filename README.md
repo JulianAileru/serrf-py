@@ -19,8 +19,10 @@ This repository ports the original R implementation (available at [slfan.shinyap
 ```
 serrf-py/
 ├── src/
-│   ├── base.py                  # Preprocessor and BatchCorrectionPipeline classes
-│   └── correlation_errors.py    # SERRF batch corrector
+│   └── serrf_py/
+│       ├── __init__.py              # Public API
+│       ├── base.py                  # Preprocessor and BatchCorrectionPipeline classes
+│       └── correlation_errors.py    # SERRF batch corrector
 ├── R/
 │   ├── serrf_function.R         # Original R implementation (reference)
 │   └── app.R                    # Original Shiny web application
@@ -28,6 +30,8 @@ serrf-py/
 │   └── SERRF example dataset.xlsx
 ├── notebooks/
 │   └── SERRFValidation.ipynb    # Python vs R comparison
+├── pyproject.toml               # Package metadata and dependencies (uv)
+├── uv.lock                      # Pinned, reproducible dependency versions
 └── CHANGELOG.md
 ```
 
@@ -36,8 +40,7 @@ serrf-py/
 ## Usage
 
 ```python
-from src.base import Preprocessor, BatchCorrectionPipeline
-from src.correlation_errors import SERRF
+from serrf_py import Preprocessor, BatchCorrectionPipeline, SERRF
 
 preprocessor = Preprocessor(
     imputation_method="Global Minimum Value",
@@ -52,7 +55,7 @@ corrector = SERRF(
     num_features=10    # number of correlated features to use per signal
 )
 log_file = 'BatchEffectCorrectionPipeline.log' # specify log file or stdout will just be directed to the console
-pipeline = BatchCorrectionPipeline(method=corrector, preprocessing_config=preprocessor,log_file='BatchEffectCorrectionPipeline.log)
+pipeline = BatchCorrectionPipeline(method=corrector, preprocessing_config=preprocessor,log_file=log_file)
 corrected = pipeline.correct(data=data, metadata=metadata)
 ```
 
@@ -125,25 +128,47 @@ The small median error and strong correlation confirm the Python implementation 
 
 ## Installation
 
-### Conda (recommended)
+### uv (recommended)
+
+The environment is defined by `pyproject.toml` and pinned in `uv.lock`, so every clone rebuilds the same `.venv`:
+
+```bash
+git clone https://github.com/JulianAileru/serrf-py.git
+cd serrf-py
+uv sync                                  # core dependencies + serrf_py (editable)
+uv sync --extra ranger                   # + rpy2, for SERRF(use_ranger=True)
+uv sync --extra ranger --group notebooks # + notebook/plotting packages
+```
+
+`uv sync` installs exactly the requested set, so pass the same flags to `uv run`, or it will remove extras you installed earlier:
+
+```bash
+uv run --extra ranger python my_script.py
+```
+
+To use serrf-py from another project's uv environment:
+
+```bash
+uv add "serrf-py @ git+https://github.com/JulianAileru/serrf-py.git"
+# or, with rpy2:
+uv add "serrf-py[ranger] @ git+https://github.com/JulianAileru/serrf-py.git"
+```
+
+For `use_ranger=True` you also need R >= 4.0 with the `ranger` package (`install.packages("ranger")`, or `module load r` on an HPC cluster).
+
+### Conda
 
 ```bash
 conda env create -f environment.yml
 conda activate serrf-py
+pip install -e .
 ```
-
-This creates a self-contained environment with all required packages. For `use_ranger=True` support, you additionally need R >= 4.0 with the `ranger` package:
-
-- **System R (already installed):** open R and run `install.packages("ranger")`
-- **Via conda instead:** uncomment `r-base` and `r-ranger` in `environment.yml` before creating the environment
 
 ### pip
 
 ```bash
-pip install -r requirements.txt
+pip install -e .            # or: pip install -e ".[ranger]"
 ```
-
-For `use_ranger=True`: install R >= 4.0 from [cran.r-project.org](https://cran.r-project.org), run `install.packages("ranger")` in R, then `pip install rpy2`.
 
 ### Dependencies
 

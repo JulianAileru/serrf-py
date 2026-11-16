@@ -1,1 +1,16 @@
-.venv
+# Environments (rebuild with `uv sync`)
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Notebooks / runtime artifacts
+.ipynb_checkpoints/
+*.log
+
+# Editor / OS
+*.swp
+*.swo
+.DS_Store

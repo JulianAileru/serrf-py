@@ -3,7 +3,6 @@ import logging
 import sys,os
 import numpy as np
 import pandas as pd
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 
 _log_formatter = logging.Formatter(

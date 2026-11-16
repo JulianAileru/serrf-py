@@ -5,7 +5,6 @@ import numpy as np
 from joblib import Parallel,delayed
 from sklearn.ensemble import RandomForestRegressor
 import sys,os
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 
 
