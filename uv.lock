@@ -1338,13 +1338,9 @@ dependencies = [
     { name = "joblib" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "rpy2" },
     { name = "scikit-learn" },
     { name = "tqdm" },
-]
-
-[package.optional-dependencies]
-ranger = [
-    { name = "rpy2" },
 ]
 
 [package.dev-dependencies]
@@ -1362,11 +1358,10 @@ requires-dist = [
     { name = "joblib", specifier = ">=1.5.3" },
     { name = "numpy", specifier = ">=2.4.0" },
     { name = "pandas", specifier = ">=2.3.3" },
-    { name = "rpy2", marker = "extra == 'ranger'", specifier = ">=3.6.4" },
+    { name = "rpy2", specifier = ">=3.6.4" },
     { name = "scikit-learn", specifier = ">=1.8.0" },
     { name = "tqdm", specifier = ">=4.67.1" },
 ]
-provides-extras = ["ranger"]
 
 [package.metadata.requires-dev]
 notebooks = [

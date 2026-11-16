@@ -8,13 +8,10 @@ dependencies = [
     "joblib>=1.5.3",
     "numpy>=2.4.0",
     "pandas>=2.3.3",
+    "rpy2>=3.6.4",
     "scikit-learn>=1.8.0",
     "tqdm>=4.67.1",
 ]
-
-[project.optional-dependencies]
-# Needed only for SERRF(use_ranger=True); also requires R >= 4.0 with the `ranger` package.
-ranger = ["rpy2>=3.6.4"]
 
 [dependency-groups]
 # Extra packages used by notebooks/SERRFValidation.ipynb

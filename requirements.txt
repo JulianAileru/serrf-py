@@ -3,6 +3,6 @@ pandas>=2.3.3
 scikit-learn>=1.8.0
 joblib>=1.5.3
 tqdm>=4.67.1
+rpy2>=3.6.4
 
-# Prefer `pip install -e .` (see pyproject.toml). Optional, only for use_ranger=True:
-# rpy2>=3.6.4
+# Prefer `pip install -e .` (see pyproject.toml).

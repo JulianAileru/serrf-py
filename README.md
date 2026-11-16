@@ -135,26 +135,19 @@ The environment is defined by `pyproject.toml` and pinned in `uv.lock`, so every
 ```bash
 git clone https://github.com/JulianAileru/serrf-py.git
 cd serrf-py
-uv sync                                  # core dependencies + serrf_py (editable)
-uv sync --extra ranger                   # + rpy2, for SERRF(use_ranger=True)
-uv sync --extra ranger --group notebooks # + notebook/plotting packages
+uv sync                     # all dependencies (incl. rpy2) + serrf_py (editable)
+uv sync --group notebooks   # + notebook/plotting packages
 ```
 
-`uv sync` installs exactly the requested set, so pass the same flags to `uv run`, or it will remove extras you installed earlier:
-
-```bash
-uv run --extra ranger python my_script.py
-```
+Then either activate the venv (`source .venv/bin/activate`) or use `uv run python my_script.py`.
 
 To use serrf-py from another project's uv environment:
 
 ```bash
 uv add "serrf-py @ git+https://github.com/JulianAileru/serrf-py.git"
-# or, with rpy2:
-uv add "serrf-py[ranger] @ git+https://github.com/JulianAileru/serrf-py.git"
 ```
 
-For `use_ranger=True` you also need R >= 4.0 with the `ranger` package (`install.packages("ranger")`, or `module load r` on an HPC cluster).
+`rpy2` is installed automatically, but for `use_ranger=True` you also need R >= 4.0 with the `ranger` package (`install.packages("ranger")`, or `module load r` on an HPC cluster).
 
 ### Conda
 
@@ -167,7 +160,7 @@ pip install -e .
 ### pip
 
 ```bash
-pip install -e .            # or: pip install -e ".[ranger]"
+pip install -e .
 ```
 
 ### Dependencies
@@ -179,5 +172,5 @@ pip install -e .            # or: pip install -e ".[ranger]"
 | `scikit-learn` | Yes | Random Forest regression |
 | `joblib` | Yes | Parallel batch processing |
 | `tqdm` | Yes | Progress bars |
-| `rpy2` | Optional | `use_ranger=True` — calls R's ranger directly |
-| R + ranger | Optional | Required alongside `rpy2` |
+| `rpy2` | Yes | `use_ranger=True` — calls R's ranger directly (imported only when used) |
+| R + ranger | Optional | Required at runtime for `use_ranger=True` |
